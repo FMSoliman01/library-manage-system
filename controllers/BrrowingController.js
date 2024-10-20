@@ -1,14 +1,13 @@
-const BorrowingHistory = require('../models/BorrowingHistory');
-const Book = require('../models/Book');
+const BorrowingHistory = require("../models/BorrowingHistory");
+const Book = require("../models/Book");
 
-// Function to borrow a book
 exports.borrowBook = async (req, res) => {
   try {
-    const { bookId } = req.body;
-    const book = await Book.findById(bookId);
+    const { id } = req.params;
+    const book = await Book.findById(id);
 
     if (!book || book.copiesAvailable <= 0) {
-      return res.status(400).json({ message: 'Book not available' });
+      return res.status(400).json({ message: "Book not available" });
     }
 
     // Set due date to 14 days from now
@@ -16,10 +15,10 @@ exports.borrowBook = async (req, res) => {
     dueDate.setDate(dueDate.getDate() + 14);
 
     const borrowingRecord = new BorrowingHistory({
-      user: req.user.accessToken.userId, 
-      book: bookId,
+      user: req.user.userId,
+      book: id,
       borrowDate: Date.now(),
-      dueDate: dueDate
+      dueDate: dueDate,
     });
 
     await borrowingRecord.save();
@@ -29,19 +28,20 @@ exports.borrowBook = async (req, res) => {
 
     res.status(201).json(borrowingRecord);
   } catch (err) {
-    res.status(500).json({ message: 'Error borrowing book' });
+    res.status(500).json({ message: "Error borrowing book" });
     console.error(err);
   }
 };
 
-// Function to return a borrowed book
 exports.returnBook = async (req, res) => {
   try {
-    const { borrowingId } = req.body;
+    const { borrowingId } = req.params;
     const record = await BorrowingHistory.findById(borrowingId);
 
     if (!record || record.returnDate) {
-      return res.status(400).json({ message: 'Invalid or already returned borrowing record' });
+      return res
+        .status(400)
+        .json({ message: "Invalid or already returned borrowing record" });
     }
 
     record.returnDate = Date.now();
@@ -53,7 +53,28 @@ exports.returnBook = async (req, res) => {
 
     res.json(record);
   } catch (err) {
-    res.status(500).json({ message: 'Error returning book' });
+    res.status(500).json({ message: "Error returning book" });
+    console.error(err);
+  }
+};
+
+exports.getUserBorrowingHistory = async (req, res) => {
+  try {
+    const { userId } = req.user;
+
+    const borrowingRecords = await BorrowingHistory.find({ user: userId })
+      .populate("book")
+      .exec();
+
+    if (!borrowingRecords || borrowingRecords.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No borrowing history found for this user" });
+    }
+
+    res.json(borrowingRecords);
+  } catch (err) {
+    res.status(500).json({ message: "Error retrieving borrowing history" });
     console.error(err);
   }
 };

@@ -1,39 +1,51 @@
-const express = require('express');
-const bcrypt = require('bcrypt');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
+const bookRoutes = require("./routes/BookRoute");
+const borrowingRoutes = require("./routes/BorrowingRoute");
+const userRoutes = require("./routes/UserRoute");
+const reportsRoutes = require("./routes/ReportRoute");
 
-const mongoose = require('mongoose'); 
 const app = express();
-const port = 3001;
-const bookRoutes = require('./routes/BookRoute');
-const borrowingRoutes = require('./routes/BorrowingRoute');
-const userRoutes = require('./routes/userRoute');
-const reportsRoutes = require('./routes/reports');
 
-const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
+//  routes
+app.use("/books", bookRoutes);
+app.use("/borrowing", borrowingRoutes);
+app.use("/users", userRoutes);
+app.use("/reports", reportsRoutes);
 
+app.get("/", (req, res) => {
+  res.send("Hello to my library!");
+});
 
-mongoose.connect("mongodb+srv://fmsoliman01:5vMKUhy2QtdPYBww@cluster0.mbkjp.mongodb.net/myLibrary?retryWrites=true&w=majority&appName=Cluster0", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  app.use(bodyParser.urlencoded({extended:false}))
-  app.use(bodyParser.json())
-  app.use('/books', bookRoutes);
-app.use('/borrowing', borrowingRoutes);
-app.use('/users', userRoutes);
-app.use('/reports', reportsRoutes);
+mongoose
+  .connect(process.env.DB_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("MongoDB connected successfully");
 
-  app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+      console.log(`Server running at http://localhost:${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1); 
   });
-})
-.catch((err) => {
-  console.log('MongoDB connection error:', err);
+
+// Global error handler for unexpected errors
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send({
+    message: "Something went wrong, please try again later.",
+  });
 });
 
-
-app.get('/', (req, res) => {
-  res.send('Hello to my library!');
-});
+module.exports = app;

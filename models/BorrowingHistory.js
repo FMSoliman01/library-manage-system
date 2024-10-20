@@ -1,14 +1,13 @@
 const mongoose = require('mongoose');
 
-// Borrowing History schema definition
+// Borrowing History schema 
 const borrowingHistorySchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Reference to User model
-  book: { type: mongoose.Schema.Types.ObjectId, ref: 'Book', required: true }, // Reference to Book model
-  borrowDate: { type: Date, default: Date.now }, // Borrow date with default value
-  returnDate: { type: Date } ,// Return date (optional)
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, 
+  book: { type: mongoose.Schema.Types.ObjectId, ref: 'Book', required: true }, 
+  borrowDate: { type: Date, default: Date.now }, 
+  returnDate: { type: Date } ,
   dueDate: { type: Date, required: true }
-}, { timestamps: true }); // Automatically track createdAt and updatedAt
+}, { timestamps: true }); 
 
-// Create BorrowingHistory model using the schema
 const BorrowingHistory = mongoose.model('BorrowingHistory', borrowingHistorySchema);
 module.exports = BorrowingHistory;
